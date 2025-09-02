@@ -19,5 +19,5 @@ class RequestLogin(BaseModel):
     password: str
 
 class LoginOut(BaseModel):
-    email: EmailStr
-    description: str
+    access_token: str
+    token_type: str

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from database import Base, engine, get_database, Session
-import models, schemas, utils
+import models, schemas, utils, auth
 
 
 Base.metadata.create_all(bind=engine)
@@ -22,11 +22,27 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_database)):
 @app.post("/login/", response_model=schemas.LoginOut)
 def login(credential: schemas.RequestLogin, db: Session = Depends(get_database)): 
     user = db.query(models.User).filter(models.User.email == credential.email).first() 
-    if not user or not utils.verify_password: 
-        raise HTTPException(status_code=404, detail="Invalid Credential") 
+    if not user or utils.verify_password(credential.email, user.password): 
+        raise HTTPException(
+            status_code=404, 
+            detail="Invalid Credential"
+        ) 
     
-    return { "email": user.email, "description": "login success" }
+    access_token = auth.create_access_token({"sub": str(user.email)})
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
 
 @app.get("/users/", response_model=list[schemas.UserOut])
 def get_users(db: Session = Depends(get_database)):
     return db.query(models.User).all()
+
+
+@app.get("/users/me")
+def get_me(current_user: models.User = Depends(auth.get_current_user)):
+    return {
+        current_user.email,
+        current_user.username
+    }
