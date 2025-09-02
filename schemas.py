@@ -12,3 +12,12 @@ class UserOut(BaseModel):
 
     class Config:
         from_atribute = True
+
+
+class RequestLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class LoginOut(BaseModel):
+    email: EmailStr
+    description: str

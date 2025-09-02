@@ -8,7 +8,12 @@ app = FastAPI()
 
 @app.post("/users/", response_model=schemas.UserOut)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_database)):
-    new_user = models.User(username=user.username, email=user.email, password=user.password)
+
+    hashed_password = utils.hash_password(user.password)
+    new_user = models.User(
+        username=user.username, 
+        email=user.email, 
+        password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
