@@ -7,3 +7,10 @@ engine = create_engine(DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(bind=engine)
 
 Base = declarative_base()
+
+def get_database():
+    database = SessionLocal()
+    try:
+        yield database
+    finally:
+        database.close()
