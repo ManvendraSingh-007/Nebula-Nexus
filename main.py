@@ -46,3 +46,23 @@ def get_me(current_user: models.User = Depends(auth.get_current_user)):
         current_user.email,
         current_user.username
     }
+
+@app.put("/users/me", response_model=schemas.UserOut)
+def update_me(
+    updated: schemas.UpdateUser,
+    db: Session = Depends(get_database),
+    current_user: models.User = Depends(auth.get_current_user),
+    ):
+    current_user.username = updated.username
+    current_user.password = utils.hash_password(updated.password)
+
+    db.commit()
+    db.refresh(current_user)
+
+    return current_user
+
+@app.delete("/users/me")
+def delete_me(to_delete_user: models.User = Depends(auth.get_current_user), db: Session = Depends(get_database)):
+    db.delete(to_delete_user)
+    db.commit()
+    return {"detail": "User deleted successfully"}

@@ -21,3 +21,9 @@ class RequestLogin(BaseModel):
 class LoginOut(BaseModel):
     access_token: str
     token_type: str
+
+
+class UpdateUser(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
