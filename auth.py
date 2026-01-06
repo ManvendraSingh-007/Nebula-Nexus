@@ -8,7 +8,7 @@ from database import Session, get_database
 import models
 from config import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def create_access_token(data: dict, expire_delta:  Optional[int] = None):
     to_encode = data.copy()

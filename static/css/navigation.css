@@ -1,0 +1,75 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+    /* FIX: Remove #000 and use transparent */
+    background-color: transparent; 
+    font-family: 'Inter', sans-serif;
+    color: var(--text-main);
+    overflow-x: hidden;
+    scrollbar-width: none;
+}
+
+body::-webkit-scrollbar { 
+    display: none; /* Chrome/Safari */
+}
+
+/* Navigation */
+.navigation {
+    position: relative;
+    z-index: 10; /* Ensure nav is clickable */
+    display: flex;
+    justify-content: space-between;
+    padding: 2rem 10%;
+    align-items: center;
+    backdrop-filter: blur(2px); /* slight blur behind nav */
+}
+
+.logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+}
+
+.logo-link,
+.logo-link:link,
+.logo-link:visited,
+.logo-link:hover,
+.logo-link:focus,
+.logo-link:active {
+  text-decoration: none; /* Removes underline */
+  color: inherit;        /* Inherits color from parent element */
+  cursor: pointer;
+  outline: none;         /* Removes the dotted border on focus in some browsers */
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.nav-link {
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: 0.3s;
+}
+
+.nav-link:hover {
+    color: var(--accent-purple);
+}
+
+.nav-link.signup {
+    color: var(--accent-blue);
+}

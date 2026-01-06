@@ -1,0 +1,181 @@
+:root {
+    --bg-deep: #05070a;
+    --accent-purple: #a044ff;
+    --accent-blue: #00d4ff;
+    --text-main: #f0f0f0;
+    --glass: rgba(255, 255, 255, 0.05);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-deep);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /* Stacks Nav on top of Main Content */
+    overflow: hidden;
+}
+
+/* This is the magic wrapper for centering */
+.main-content {
+    flex: 1;
+    /* Takes up all remaining space below the nav */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- Shared Container (Works for both .signup-box and .login-container) --- */
+.signup-box,
+.login-container {
+    background: var(--glass);
+    padding: 2.5rem;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    /* Removed the body-specific properties from here */
+}
+
+.signup-box h2,
+.login-container h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    background: linear-gradient(to bottom right, #fff, var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.signup-box p,
+.login-container p {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-bottom: 25px;
+    font-family: monospace;
+}
+
+/* --- Form Elements --- */
+.signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.signup-form input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 14px;
+    border-radius: 15px;
+    color: white;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    /* Ensures inputs take full width */
+}
+
+.signup-form input:focus {
+    outline: none;
+    border-color: var(--accent-purple);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.signup-form input[type="submit"] {
+    margin-top: 15px;
+    background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+}
+
+.signup-form input[type="submit"]:hover {
+    filter: brightness(1.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(160, 68, 255, 0.3);
+}
+
+input[type="password"] {
+    letter-spacing: 0.3em;
+    /* Makes the dots look like a star constellation line */
+    font-family: 'Courier New', monospace;
+    /* Gives it a retro-tech feel */
+}
+
+/* Add this class to keep the mono font and spacing even when type="text" */
+.revealed-coordinates {
+    letter-spacing: 0.3em !important;
+    font-family: 'Courier New', monospace !important;
+}
+
+::placeholder {
+    color: var(--accent-blue);
+    opacity: 0.4;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px #202027 inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    border-color: var(--accent-purple);
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Optional: Make the border match your accent when autofilled */
+input:-webkit-autofill {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* --- Toggle Password Section --- */
+.glyph-trigger {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    user-select: none;
+    align-items: center;
+    margin-top: 5px;
+    color: var(--accent-blue);
+    font-size: 0.75rem;
+    font-family: monospace;
+}
+
+.glyph-trigger p,
+#symbol {
+    cursor: pointer;
+    margin: 0;
+}
+
+.glyph-trigger p:hover,
+#symbol:hover {
+    filter: brightness(1.4);
+}
+
+/* --- Footer Links --- */
+.footer-links {
+    display: flex;
+    justify-content: space-evenly;
+    align-content: stretch;
+    align-items: baseline;
+    flex-wrap: wrap;
+    margin-top: 2em;
+}
+
+.footer-links a,
+.footer-link p {
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.footer-links span {
+    margin: 0 10px;
+    color: rgba(255, 255, 255, 0.3);
+}

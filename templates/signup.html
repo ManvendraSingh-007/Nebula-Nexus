@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebula-Nexus | Join the Galaxy</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/login-signup.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/navigation.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/constellation.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <div id="stars-container"></div>
+    <canvas id="constellation-canvas"></canvas>
+
+    <nav class="navigation">
+        <div class="logo"><a href="/" class="logo-link">Nebula-Nexus</a></div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/about" class="nav-link">About</a>
+            <a href="/login" class="nav-link">Login</a>
+            <a href="/signup" class="nav-link signup">Sign Up</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="signup-box">
+            <h2>Join the Nexus</h2>
+            <p>Create your galactic identity</p>
+
+            <form action="http://127.0.0.1:8000/signup/" method="post" class="signup-form">
+                <input type="text" name="username" placeholder="Register Operator ID (e.g. Orion_99)" id="usernameForum" required>
+                <input type="email" name="email" placeholder="Nebula Address (e.g. orion@voyages.com)"
+                    id="emailForum" required>
+                <input type="password" name="password" id="passwordForum" placeholder="Calibrate Access Key..." required>
+                <div class="glyph-trigger" onclick="togglePass('passwordForum')" style="cursor: pointer;">
+                    <p id="symbol">- ></p>
+                    <p id="glyph-text">SHOW COORDINATES</p>
+                </div>
+
+                <input type="submit" value="Launch Profile">
+            </form>
+
+            <div class="footer-links">
+                <p>Already a member ?</p>
+                <span>•</span>
+                <a href="/login">Return to base</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', path='/js/constellation.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/login-signup.js') }}"></script>
+</body>
+
+</html>
