@@ -19,43 +19,20 @@
 
 .cosmic-star {
     position: absolute;
+    background-color: #fff;
     border-radius: 50%;
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    opacity: 0.3;
 }
 
-/* The actual visible part of the star */
+/* Simple twinkle effect */
+@keyframes cosmic-twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+}
+
 .twinkle-layer {
     width: 100%;
     height: 100%;
-    background-color: #fff;
     border-radius: 50%;
-    opacity: var(--base-opacity, 0.5);
-    animation: cosmic-twinkle var(--duration, 3s) ease-in-out infinite;
-}
-
-/* Animations */
-@keyframes cosmic-twinkle {
-    0%, 100% { transform: scale(0.8); opacity: var(--base-opacity, 0.5); }
-    50% { transform: scale(1.1); opacity: 0.9; }
-}
-
-/* Active States */
-.cosmic-star.active .twinkle-layer {
-    animation: star-pulse 4s ease-in-out infinite !important;
-}
-
-@keyframes star-pulse {
-    0%, 100% { 
-        transform: scale(1.5); 
-        box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.5); 
-        opacity: 1;
-    }
-    50% { 
-        transform: scale(2.0); 
-        box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.8); 
-        opacity: 1;
-    }
+    animation: cosmic-twinkle 4s ease-in-out infinite;
 }

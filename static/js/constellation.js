@@ -1,11 +1,10 @@
 (function () {
     const CONFIG = {
         starCount: 150,
-        spawnInterval: 4000,     // Time between new constellations
-        fadeDuration: 8000,      // How long a constellation lasts
-        maxDistance: 200,        // Max length of a line
-        constellationSize: 6,    // Number of stars in a group
-        lineAlphaMax: 0.6        // Max brightness of lines
+        spawnInterval: 4000,
+        fadeDuration: 8000,
+        maxDistance: 300,
+        constellationSize: 14
     };
 
     let starsContainer, canvas, ctx;
@@ -38,18 +37,14 @@
         for (let i = 0; i < CONFIG.starCount; i++) {
             const x = Math.random() * window.innerWidth;
             const y = Math.random() * window.innerHeight;
-            const size = Math.random() * 2 + 1;
+            const size = Math.random() * 1.5 + 0.5;
 
             const div = document.createElement('div');
             div.className = 'cosmic-star';
-            div.style.cssText = `left:${x}px; top:${y}px; width:${size}px; height:${size}px;`;
+            div.style.cssText = `left:${x}px; top:${y}px; width:${size}px; height:${size}px; opacity:${0.2 + Math.random() * 0.4};`;
             
-            // Inner layer for independence from wrapper logic
             const inner = document.createElement('div');
             inner.className = 'twinkle-layer';
-            inner.style.setProperty('--duration', (2 + Math.random() * 3) + 's');
-            inner.style.setProperty('--base-opacity', (0.2 + Math.random() * 0.5));
-            
             div.appendChild(inner);
             starsContainer.appendChild(div);
 
@@ -57,45 +52,68 @@
         }
     }
 
-    // Connects stars using distance logic
+    /**
+     * HYBRID LOGIC:
+     * 1. Ensures all stars are connected (MST) for structure.
+     * 2. Adds randomized nearest-neighbor branches for geometry.
+     */
     function getConnections(group) {
         let lines = [];
-        // Simple strategy: Connect every star to its 2 nearest neighbors
-        // This is faster than Prim's algorithm and looks just as good for small groups
-        group.forEach((starA, i) => {
-            let neighbors = [];
-            group.forEach((starB, j) => {
-                if (i === j) return;
-                const dist = Math.hypot(starA.x - starB.x, starA.y - starB.y);
-                if (dist < CONFIG.maxDistance) {
-                    neighbors.push({ star: starB, dist: dist });
-                }
+        const seen = new Set();
+
+        const addLine = (a, b) => {
+            const key = [group.indexOf(a), group.indexOf(b)].sort().join('-');
+            if (!seen.has(key)) {
+                lines.push({ from: a, to: b });
+                seen.add(key);
+            }
+        };
+
+        // PART 1: ENSURE ALL CONNECT (Prim's MST)
+        let reached = [group[0]];
+        let unreached = group.slice(1);
+        while (unreached.length > 0) {
+            let record = { dist: Infinity, rIdx: 0, uIdx: 0 };
+            reached.forEach((r, ri) => {
+                unreached.forEach((u, ui) => {
+                    const d = Math.hypot(r.x - u.x, r.y - u.y);
+                    if (d < record.dist) record = { dist: d, rIdx: ri, uIdx: ui };
+                });
             });
-            // Sort by closest and pick top 2
-            neighbors.sort((a, b) => a.dist - b.dist).slice(0, 2).forEach(n => {
-                // Avoid duplicates (checking simplified)
-                lines.push({ from: starA, to: n.star });
-            });
+            if (record.dist < CONFIG.maxDistance) {
+                addLine(reached[record.rIdx], unreached[record.uIdx]);
+            }
+            reached.push(unreached[record.uIdx]);
+            unreached.splice(record.uIdx, 1);
+        }
+
+        // PART 2: NEAREST NEIGHBOR BRANCHES
+        group.forEach((starA) => {
+            let potential = group
+                .map(starB => ({ star: starB, dist: Math.hypot(starA.x - starB.x, starA.y - starB.y) }))
+                .filter(n => n.star !== starA && n.dist < CONFIG.maxDistance)
+                .sort((a, b) => a.dist - b.dist);
+
+            // Randomly add 1 extra neighbor for geometric variety
+            if (potential.length > 0 && Math.random() > 0.5) {
+                addLine(starA, potential[0].star);
+            }
         });
+
         return lines;
     }
 
     function spawnConstellation() {
         if (activeConstellation) return;
 
-        // Pick random start
         const centerIdx = Math.floor(Math.random() * stars.length);
         const center = stars[centerIdx];
 
-        // Find nearest stars to form a cluster
         const cluster = stars
             .map(s => ({ s, dist: Math.hypot(center.x - s.x, center.y - s.y) }))
             .sort((a, b) => a.dist - b.dist)
             .slice(0, CONFIG.constellationSize)
             .map(item => item.s);
-
-        // Activate CSS on stars
-        cluster.forEach(s => s.element.classList.add('active'));
 
         activeConstellation = {
             stars: cluster,
@@ -107,7 +125,6 @@
     function renderLoop(now) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Spawn logic
         if (!activeConstellation && (now - lastSpawnTime > CONFIG.spawnInterval)) {
             spawnConstellation();
             lastSpawnTime = now;
@@ -118,35 +135,23 @@
             const progress = elapsed / CONFIG.fadeDuration;
 
             if (progress >= 1) {
-                // Reset
-                activeConstellation.stars.forEach(s => s.element.classList.remove('active'));
                 activeConstellation = null;
             } else {
-                // Calculate Smooth Fade using Sine Wave
-                // 0 -> 1 -> 0 over the duration
-                const alpha = Math.sin(progress * Math.PI) * CONFIG.lineAlphaMax;
-
+                const alpha = Math.sin(progress * Math.PI);
                 ctx.beginPath();
-                ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-                ctx.lineWidth = 1;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.45})`;
+                ctx.lineWidth = 0.8;
                 
-                // Optional: Subtle glow on lines
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = `rgba(255, 255, 255, ${alpha * 0.5})`;
-
                 activeConstellation.lines.forEach(line => {
                     ctx.moveTo(line.from.x, line.from.y);
                     ctx.lineTo(line.to.x, line.to.y);
                 });
-                
                 ctx.stroke();
             }
         }
-
         requestAnimationFrame(renderLoop);
     }
 
-    // Start
     if (document.readyState === 'complete') init();
     else window.addEventListener('load', init);
 })();

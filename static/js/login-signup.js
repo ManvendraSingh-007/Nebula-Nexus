@@ -3,22 +3,23 @@ function togglePass(passwordId) {
     let option = document.getElementById("glyph-text");
     let symbol = document.getElementById("symbol");
 
-    // 1. Check if the field is empty
-    if (x.value.length === 0) {
-        console.log("Transmission empty: No coordinates to reveal.");
-        return; // Exit the function if nothing is typed
-    }
+    // 1. Exit if empty
+    if (x.value.length === 0) return;
 
-    // 2. Toggle logic
+    // 2. Toggle based ONLY on the input type
     if (x.type === "password") {
         x.type = "text";
-        x.classList.add("revealed-coordinates"); // Apply the mono styling
-        option.innerText = "HIDE COORDINATES";
+        x.classList.add("revealed-coordinates");
+        
+        // Update labels to your new theme
+        option.innerText = "HIDE ACCESS KEY"; 
         symbol.innerText = "< -";
     } else {
         x.type = "password";
-        x.classList.remove("revealed-coordinates"); // Remove the styling
-        option.innerText = "SHOW COORDINATES";
+        x.classList.remove("revealed-coordinates");
+        
+        // Match the text exactly
+        option.innerText = "SHOW ACCESS KEY"; 
         symbol.innerText = "- >";
     }
 }
