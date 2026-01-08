@@ -37,3 +37,6 @@ class UpdateUser(BaseModel):
     username: str
     email: EmailStr
     password: str
+
+class VerifyOtp(BaseModel):
+    otp: str
