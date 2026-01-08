@@ -31,11 +31,13 @@ def create_access_token(data: dict, expire_delta:  Optional[int] = None):
 def verify_access_token(token: str):
     try:
         payload = jwt.decode(token=token, key=SECRET_KEY, algorithms=ALGORITHM)
-        user_email: str = payload.get("sub") 
+        # {'sub': 'example@ok.com', 'exp': 176783691}
+        user_email: str = payload.get("email") 
+        username: str = payload.get("user")
         if user_email is None:
             raise HTTPException(status_code=404, detail="Invalid Token")
         
-        return user_email
+        return [user_email, username]
     
     except JWTError as j:
         raise HTTPException(status_code=404, detail=f"{j}")
