@@ -25,13 +25,24 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Exception --- --- ---
 
 @app.exception_handler(404)
-async def custom_404_handler(request: Request, exc: HTTPException):
+async def not_found_handler(request: Request, exc: HTTPException):
     return templates.TemplateResponse(
         "404.html", 
         {"request": request}, 
         status_code=404
     )
 
+
+@app.exception_handler(405)
+async def method_not_allowed_handler(request: Request, exc: HTTPException):
+
+    # Check if the user tried to visit /logout specifically
+    if request.url.path == "/logout":
+        # Redirect them back to the dashboard or home
+        return RedirectResponse(url="/dashboard/", status_code=303)
+    
+    # For any other 405, show a custom error page or redirect to home
+    return templates.TemplateResponse("405.html", {"request": request}, status_code=405)
 
 
 
@@ -53,12 +64,10 @@ async def show_login_page(request: Request, error: str = None):
     })
 
 @app.get("/signup", response_class=HTMLResponse)
-async def show_signup_page(request: Request, error: str = None, error_type: str = None):
-     # Provide a default empty list if no error exists
-    error_data = [error, error_type] if error else [False, False]
+async def show_signup_page(request: Request, error: str = None):
     return templates.TemplateResponse("signup.html", {
         "request": request,
-        "error": error_data
+        "error": error
     })
 
 @app.get("/about", response_class=HTMLResponse)
@@ -101,7 +110,7 @@ def get_me(current_user: models.User = Depends(auth.get_current_user)):
     }
 
 
-@app.get("/dashboard", response_class=HTMLResponse)
+@app.get("/nexus/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request, access_token: Annotated[str | None, Cookie()] = None):
     if not access_token:
         return RedirectResponse(url="/login/", status_code=303)
@@ -139,14 +148,21 @@ async def dashboard(request: Request, access_token: Annotated[str | None, Cookie
 
 
 
-@app.get("/logout")
+@app.post("/logout")
 async def logout():
-    # 1. Redirect to home page
-    response = RedirectResponse(url="/", status_code=303)
+    # 303 See Other is the correct status for redirecting after a POST
+    response = RedirectResponse(url="/login/", status_code=status.HTTP_303_SEE_OTHER)
     
-    # 2. Instruct the browser to delete the cookie
-    # Important: 'Path' must match the path where the cookie was originally set
-    response.delete_cookie(key="access_token", path="/")
+    # Securely wipe the token
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        httponly=True,
+        samesite="lax"
+    )
+    
+    # Optional: Add headers to prevent back-button caching
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     return response
 
 
@@ -168,59 +184,52 @@ def create_user(
     # check if email already exist if yes then show error
     if existing_email:
         return RedirectResponse(
-            url="/signup?error=Cosmic Address already registered&error_type=email", 
+            url="/signup?error=Cosmic Address already registered", 
             status_code=303  # <--- CRITICAL FIX
         )
 
     # check if username already exist if yes then show error
     if existing_username:
         return RedirectResponse(
-            url="/signup?error=Stellar Signature already claimed&error_type=username", 
+            url="/signup?error=Stellar Signature already claimed", 
             status_code=303  # <--- CRITICAL FIX
         )
 
 
-    # check if the user exist in pending user
-    if db.query(models.PendingUser).filter(
-        (models.PendingUser.email == user.email) | (models.PendingUser.username == user.username)).first():
-        redirect = RedirectResponse(url="/verify-otp", status_code=303)
-        redirect.set_cookie(
-            key="pending_verification_email", 
-            value=user.email, # Set a secure cookie containing the email
-            httponly=False, # httponly=True: Prevents JS access (XSS protection)
-            secure=False, # secure=True: Only sends over HTTPS, False for now
-             # samesite="Lax", # samesite="Lax": Prevents CSRF while allowing redirects
-            max_age=300  # Expires in 5 minutes (matching your TTL)
-        )
-        return redirect
+    pending_exists = db.query(models.PendingUser).filter(
+        (models.PendingUser.email == user.email) | (models.PendingUser.username == user.username)
+    ).first()
 
-    # if user does not exist
-    else:
-        # Encrypt the plain text password before storing it.
+    # 2. If the user does NOT exist, create them
+    if not pending_exists:
         hashed_password = utils.hash_password(user.password)
         generated_otp = utils.generate_otp()
-        pending_user = models.PendingUser(
+        
+        new_pending = models.PendingUser(
             username=user.username, 
             email=user.email, 
             password=hashed_password,
             otp_code=generated_otp
         )
 
-        db.add(pending_user)
+        db.add(new_pending)
         db.commit()
-        db.refresh(pending_user)
+        db.refresh(new_pending)
 
-        # background_tasks.add_task(utils.send_otp_email, user.email, generated_otp)
-        redirect = RedirectResponse(url="/verify-otp", status_code=303)
-        redirect.set_cookie(
-            key="pending_verification_email", 
-            value=user.email, # Set a secure cookie containing the email
-            httponly=True, # httponly=True: Prevents JS access (XSS protection)
-            secure=False, # secure=True: Only sends over HTTPS, False for now
-            samesite="Lax", # samesite="Lax": Prevents CSRF while allowing redirects
-            max_age=300  # Expires in 5 minutes (matching your TTL)
-        )
-        return redirect
+        # Send email in background
+        background_tasks.add_task(utils.send_otp_email, user.email, generated_otp)
+    
+    # 3. Final Step: Handle Redirect and Cookie (Executed for both New and Existing users)
+    redirect = RedirectResponse(url="/verify-otp/", status_code=303)
+    redirect.set_cookie(
+        key="pending_verification_email", 
+        value=user.email,
+        httponly=True,  # Set to True for security!
+        secure=True, 
+        samesite="Lax",
+        max_age=300
+    )
+    return redirect
 
 
 
@@ -238,10 +247,10 @@ def login(credential: Annotated[schemas.RequestLogin, Form()], db: Session = Dep
         )
     
     # if everything found issue a access token
-    access_token = auth.create_access_token({"email": str(user.email), "user": str(user.username)})
+    access_token = auth.create_access_token({"sub": str(user.email), "username": str(user.username)})
     
     # 1. Create the redirect object
-    response = RedirectResponse(url="/dashboard", status_code=303)
+    response = RedirectResponse(url="/nexus/dashboard", status_code=303)
     
     # 2. Set the cookie on THAT instance
     response.set_cookie(
@@ -249,7 +258,7 @@ def login(credential: Annotated[schemas.RequestLogin, Form()], db: Session = Dep
         value=f"Bearer {access_token}", 
         httponly=True,
         samesite="lax",
-        secure=False  # Set to True if using HTTPS (production)
+        secure=True  
     )
     return response
 
@@ -268,28 +277,50 @@ async def verify_otp(
     user = db.query(models.PendingUser).filter(models.PendingUser.email == pending_email).first()
 
     try:
-        # if yes
-        if user:
-            if data.otp == user.otp_code:
-                register_user = models.User(
-                    username=user.username,
-                    email=user.email,
-                    password=user.password
-                )
+        if user and data.otp == user.otp_code:
+            # Create new user
+            register_user = models.User(
+                username=user.username,
+                email=user.email,
+                password=user.password
+            )
+            db.add(register_user)
+            
+            # Delete pending user
+            db.delete(user) 
+            
+            # Commit both at once
+            db.commit()
+            db.refresh(register_user)
 
-                db.add(register_user)
-                db.commit()
-                db.refresh(register_user)
+            # 2. Create the response
+            response = RedirectResponse(url="/registered", status_code=303)
+            
+            # 3. Create Token (Use 'sub' for the email)
+            access_token = auth.create_access_token({
+                "sub": str(register_user.email), 
+                "username": str(register_user.username)
+            })
 
+            # 4. Set Cookie
+            response.set_cookie(
+                key="access_token", 
+                value=f"Bearer {access_token}", 
+                httponly=True,
+                samesite="lax",
+                secure=True,  #
+                max_age=3600  # Set an expiration ( 1 hour)
+            )
+            
+            # 5. Clean up the pending cookie
+            response.delete_cookie("pending_verification_email")
+            return response
+        else:
+            return {"error": "Invalid OTP"}
 
-                return RedirectResponse(url="/registered", status_code=303)
-
-            # if otp does not match
-            else:
-                return RedirectResponse(url="/verify-otp?error=Invalid otp", status_code=303)
-        
     except Exception as e:
-        print(e)
+        db.rollback() #  roll back if anything fails
+        print(f"Database Error: {e}")
     
             
 
