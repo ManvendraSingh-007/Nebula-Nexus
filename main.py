@@ -21,6 +21,21 @@ templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
+
+# Exception --- --- ---
+
+@app.exception_handler(404)
+async def custom_404_handler(request: Request, exc: HTTPException):
+    return templates.TemplateResponse(
+        "404.html", 
+        {"request": request}, 
+        status_code=404
+    )
+
+
+
+
+
 # GET ---
 
 
