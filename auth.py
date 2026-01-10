@@ -32,8 +32,8 @@ def verify_access_token(token: str):
     try:
         payload = jwt.decode(token=token, key=SECRET_KEY, algorithms=ALGORITHM)
         # {'sub': 'example@ok.com', 'exp': 176783691}
-        user_email: str = payload.get("email") 
-        username: str = payload.get("user")
+        user_email: str = payload.get("sub") 
+        username: str = payload.get("username")
         if user_email is None:
             raise HTTPException(status_code=404, detail="Invalid Token")
         
