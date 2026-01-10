@@ -1,34 +1,35 @@
-import bcrypt
-import random
-import smtplib
-import ssl
+import bcrypt, random, smtplib, ssl, os
 from email.message import EmailMessage
-import os
 
 def generate_otp():
     return f"{random.randint(100000, 999999)}"
 
+
+
 def send_otp_email(receiver_email: str, code: str):
     msg = EmailMessage()
-    msg.set_content(f"Your Nebula Nexus verification code is: {code}")
-    msg['Subject'] = 'Verify your Stellar Account'
+    
+    # Read HTML template
+    with open("templates/email_template.html", "r") as f:
+        html_content = f.read().replace("{code}", code)
+    
+    # Set HTML content
+    msg.add_alternative(html_content, subtype='html')
+
+    msg['Subject'] = 'Nebula-Nexus | Verification Code'
     msg['From'] = "nebulanexus.system@gmail.com"
     msg['To'] = receiver_email
 
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
     sender_email = "nebulanexus.system@gmail.com"
-    
-    # Replace this with your actual 16-character App Password from Google
     app_password = os.getenv("MAIL_APP_PASSWORD")
 
-    # 3. Security context for the connection
     context = ssl.create_default_context()
 
     try:
-        # Use 'with' to ensure the connection closes automatically
         with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls(context=context)  # Secure the connection
+            server.starttls(context=context)
             server.login(sender_email, app_password)
             server.send_message(msg)
             print(f"--- EMAIL SENT TO {receiver_email}: CODE IS {code} ---")
