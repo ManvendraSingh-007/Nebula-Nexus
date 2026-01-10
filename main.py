@@ -67,7 +67,17 @@ async def show_about_page(request: Request):
 
 
 @app.get("/verify-otp", response_class=HTMLResponse)
-async def show_otp_page(request: Request, error: str | None = None):
+async def show_otp_page(request: Request, error: str | None = None, pending_email: str = Cookie(None, alias="pending_verification_email")):
+     # 1. If NO cookie and NO error in URL: They just randomly typed the URL
+    if not pending_email and error == None:
+        return RedirectResponse(url="/signup/", status_code=303)
+
+    # 2. If NO cookie but there IS an error: They were here, but it expired
+    if not pending_email:
+        return templates.TemplateResponse("verify-otp.html", {
+            "request": request, 
+            "error": "Your session has expired. Please sign up again."
+        })
     return templates.TemplateResponse("verify-otp.html", {
         "request": request,
         "error": error
