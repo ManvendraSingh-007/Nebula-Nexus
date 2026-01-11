@@ -1,14 +1,30 @@
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from the .env file.
+# Load variables from .env into memory
 load_dotenv()
 
-# The secret password used to sign and verify security tokens (JWT).
-SECRET_KEY = os.getenv("SECRET_KEY") 
+class Config:
+    # App Secrets
+    SECRET_KEY = os.getenv("SECRET_KEY", "default-dev-key")
+    
+    # Database Settings (Casting Port to int)
+    DB_USER = os.getenv("DATABASE_USER")
+    DB_PASSWORD = os.getenv("DATABASE_PASSWORD")
+    DB_HOST = os.getenv("DATABASE_HOST", "localhost")
+    DB_PORT = int(os.getenv("DATABASE_PORT", 3306))
+    DB_NAME = os.getenv("DATABASE_NAME")
+    
+    # Mail Settings
+    MAIL_PWD = os.getenv("MAIL_APP_PASSWORD")
 
-# The hashing algorithm used to encrypt the tokens (defaults to HS256).
-ALGORITHM = os.getenv("ALGORITHM", "HS256") 
+    # Mandatory check: Fail fast if critical keys are missing
+    @classmethod
+    def validate(cls):
+        required = ["SECRET_KEY", "DB_USER", "DB_PASSWORD", "DB_NAME"]
+        for key in required:
+            if not getattr(cls, key):
+                raise ValueError(f"CRITICAL: {key} is not set in .env")
 
-# How long a login token remains valid (in minutes) before the user is logged out (default = 30)
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+# Run validation on startup
+Config.validate()
