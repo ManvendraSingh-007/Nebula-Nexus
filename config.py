@@ -18,6 +18,11 @@ class Config:
     # Mail Settings
     MAIL_PWD = os.getenv("MAIL_APP_PASSWORD")
 
+    # Default Settings
+    ACCESS_TOKEN_EXPIRE_MINUTES=30
+    ALGORITHM="HS256"
+
+
     # Mandatory check: Fail fast if critical keys are missing
     @classmethod
     def validate(cls):
