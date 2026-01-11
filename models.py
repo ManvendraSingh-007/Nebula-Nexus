@@ -1,5 +1,5 @@
 from database import Base
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, func
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, text
 
 class User(Base):
     __tablename__ = "users"
@@ -23,5 +23,5 @@ class PendingUser(Base):
     email = Column(String(100), nullable=False)
     password = Column(String(200), nullable=False) # Hashed
     otp_code = Column(String(20), nullable=False)
-    created_at = Column(DateTime, server_default=func.utc_timestamp())
+    created_at = Column(DateTime, server_default=text("(UTC_TIMESTAMP())"))
     isVerified = Column(Boolean, default=False, nullable=False)
