@@ -39,7 +39,7 @@ async def method_not_allowed_handler(request: Request, exc: HTTPException):
     # Check if the user tried to visit /logout specifically
     if request.url.path == "/logout":
         # Redirect them back to the dashboard or home
-        return RedirectResponse(url="/dashboard/", status_code=303)
+        return RedirectResponse(url="/nexus/dashboard", status_code=303)
     
     # For any other 405, show a custom error page or redirect to home
     return templates.TemplateResponse("405.html", {"request": request}, status_code=405)
