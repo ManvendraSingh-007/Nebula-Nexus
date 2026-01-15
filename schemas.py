@@ -43,3 +43,7 @@ class VerifyOtp(BaseModel):
 
 class RequestRecoverAccessKey(BaseModel):
     email: EmailStr
+
+class ResetAccessKey(BaseModel):
+    new_password: str
+    reset_token: str
