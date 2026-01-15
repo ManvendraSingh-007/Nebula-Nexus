@@ -25,3 +25,12 @@ class PendingUser(Base):
     otp_code = Column(String(20), nullable=False)
     created_at = Column(DateTime, server_default=text("(UTC_TIMESTAMP())"))
     isVerified = Column(Boolean, default=False, nullable=False)
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), index=True)
+    token = Column(String(255), unique=True, index=True)
+    expires_at = Column(DateTime)
+    created_at = Column(DateTime, server_default=text("(UTC_TIMESTAMP())"))
