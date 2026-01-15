@@ -1,4 +1,4 @@
-import bcrypt, random, smtplib, ssl, os, secrets
+import bcrypt, random, smtplib, ssl, os, secrets, hashlib
 from email.message import EmailMessage
 
 def generate_otp():
@@ -35,7 +35,11 @@ def send_otp_email(receiver_email: str, code: str):
             print(f"--- EMAIL SENT TO {receiver_email}: CODE IS {code} ---")
     except Exception as e:
         print(f"Error: {e}")
-    
+
+# securely hash a string token using the SHA-256 algorithm
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
 # takes raw password -> returns an hashed one (#####)
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password=password.encode(), salt=bcrypt.gensalt())
@@ -45,7 +49,7 @@ def verify_password(password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(password=password.encode(), hashed_password=hashed_password.encode())
 
 def generate_reset_token():
-    return secrets.token_urlsafe(32)
+    return secrets.token_urlsafe(64)
 
 def send_reset_link_email(receiver_email: str, reset_link: str):
     msg = EmailMessage()
