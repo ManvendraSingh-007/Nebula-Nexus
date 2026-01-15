@@ -27,7 +27,7 @@ serializer = URLSafeSerializer(config.Config.SECRET_KEY)
 
 
 
-# Exception --- --- ---
+# Exception --- --- --- --- ---
 
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: HTTPException):
@@ -52,7 +52,7 @@ async def method_not_allowed_handler(request: Request, exc: HTTPException):
 
 
 
-# GET ---
+# GET --- --- --- --- ---
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -61,19 +61,23 @@ async def show_home_page(request: Request):
 
 
 @app.get("/login", response_class=HTMLResponse)
-async def show_login_page(request: Request, error: str = None):
+async def show_login_page(request: Request, error: str = Cookie(None, alias="error")):
     # Render the file from the templates folder
-    return templates.TemplateResponse("login.html", {
+    response = templates.TemplateResponse("login.html", {
         "request": request,
         "error": error
     })
+    response.delete_cookie(key="error")
+    return response
 
 @app.get("/signup", response_class=HTMLResponse)
-async def show_signup_page(request: Request, error: str = None):
-    return templates.TemplateResponse("signup.html", {
+async def show_signup_page(request: Request, error: str = Cookie(None, alias="error")):
+    response = templates.TemplateResponse("signup.html", {
         "request": request,
         "error": error
     })
+    response.delete_cookie(key="error")
+    return response
 
 @app.get("/about", response_class=HTMLResponse)
 async def show_about_page(request: Request):
@@ -81,21 +85,26 @@ async def show_about_page(request: Request):
 
 
 @app.get("/verify-otp", response_class=HTMLResponse)
-async def show_otp_page(request: Request, error: str | None = None, pending_email: str = Cookie(None, alias="pending_user_token")):
-     # 1. If NO cookie and NO error in URL: They just randomly typed the URL
+async def show_otp_page(request: Request, error: str = Cookie(None, alias="error"), pending_email: str = Cookie(None, alias="pending_user_token")):
+     # 1. If NO cookie and NO error: They just randomly typed the URL
     if not pending_email and error == None:
         return RedirectResponse(url="/signup/", status_code=303)
 
     # 2. If NO cookie but there IS an error: They were here, but it expired
     if not pending_email:
-        return templates.TemplateResponse("verify-otp.html", {
-            "request": request, 
-            "error": "Your session has expired. Please sign up again."
+        response = templates.TemplateResponse("verify-otp.html", {
+            "request": request,
+            "error": error
         })
-    return templates.TemplateResponse("verify-otp.html", {
+        response.delete_cookie(key="error")
+        return response
+    
+    response = templates.TemplateResponse("verify-otp.html", {
         "request": request,
         "error": error
     })
+    response.delete_cookie(key="error")
+    return response
 
 @app.get("/registered", response_class=HTMLResponse)
 async def show_success_registed(request: Request):
@@ -116,7 +125,7 @@ def get_me(current_user: models.User = Depends(auth.get_current_user)):
 
 
 @app.get("/nexus/dashboard", response_class=HTMLResponse)
-async def dashboard(
+async def show_dashboard(
         request: Request, 
         access_token: Annotated[str | None, Cookie(alias="Authorization")] = None, 
         db: Session = Depends(get_database)
@@ -163,23 +172,49 @@ async def dashboard(
         return RedirectResponse(url="/login", status_code=303)
 
 
-
-@app.post("/logout")
-async def logout():
-    # 303 See Other is the correct status for redirecting after a POST
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+@app.get("/recover-access-key")
+async def show_recover_password_page(
+    request: Request, 
+    message: str | None = Cookie(default=None) 
+):
+    # Pass it as 'message' to the HTML
+    context = {"request": request, "message": message}
+    response = templates.TemplateResponse("forgot-password.html", context)
     
-    # Securely wipe the token
-    response.delete_cookie(
-        key="Authorization",
-        path="/",
-        httponly=True,
-        samesite="lax"
-    )
-
-    response.headers["Clear-Site-Data"] = '"cache", "cookies", "storage"'
+    if message:
+        response.delete_cookie(key="message")
+        
     return response
 
+
+@app.get("/reset-access-key")
+async def show_password_reset_page(
+        request: Request, 
+        token: str | None = None, 
+        db: Session = Depends(get_database)
+    ):
+    # 1. If NO token is provided at all
+    if not token:
+        return RedirectResponse(url="/", status_code=303)
+
+    # 2. Look for the token in the DB
+    resetRequest = db.query(models.PasswordResetToken).filter(models.PasswordResetToken.token == token).first()
+
+    # 3. Validation Logic
+    if resetRequest:
+        # SUCCESS: Show the form to enter the new password
+        return templates.TemplateResponse("password-reset.html", {
+            "request": request, 
+            "error": None,
+            "token": token, # Pass the token so the form can submit it back
+        })
+    else:
+        # RENDER the page with an error message (NO REDIRECT)
+        return templates.TemplateResponse("password-reset.html", {
+            "request": request, 
+            "error": "This link has expired or is an invalid one. Please request a new one.",
+            "token": None
+        })
 
 
 # POST --- --- --- --- --- ---
@@ -187,7 +222,7 @@ async def logout():
 
 # Route to register a new user.
 @app.post("/signup", response_model=schemas.UserOut)
-def create_user(
+def signup(
         background_tasks: BackgroundTasks,
         user: Annotated[schemas.UserCreate, Form()], 
         db: Session = Depends(get_database)
@@ -201,16 +236,30 @@ def create_user(
     if existing_user:
         # 2. check for email and username matches
         if existing_user.email == user.email:
-            return RedirectResponse(
-                url="/signup?error=Cosmic Address already registered", 
-                status_code=303
+            response = RedirectResponse(url="/signup", status_code=303)
+            response.set_cookie(
+                key="error",
+                value="Cosmic address already exist, return to base?",
+                httponly=True,
+                samesite="lax",
+                secure=True,
+                max_age=300
             )
+
+            return response
         
         if existing_user.username == user.username:
-            return RedirectResponse(
-                url="/signup?error=Stellar Signature already claimed", 
-                status_code=303
+            response = RedirectResponse(url="/signup", status_code=303)
+            response.set_cookie(
+                key="error",
+                value="Stellar signature already claimed, pick different",
+                httponly=True,
+                samesite="lax",
+                secure=True,
+                max_age=300
             )
+
+            return response
 
 
     # 1. check if the new user exist in the pending_user tabel
@@ -262,10 +311,17 @@ def login(credential: Annotated[schemas.RequestLogin, Form()], db: Session = Dep
     
     # if no email found or if the password does not match -> redirect to login with the exception
     if not user or not utils.verify_password(credential.password, user.password): 
-        return RedirectResponse(
-            url="/login?error=Invalid Cosmic Address or Access Key", 
-            status_code=303
+        response = RedirectResponse(url="/login", status_code=303)
+        response.set_cookie(
+            key="error",
+            value="Invalid Cosmic address or Access key",
+            httponly=True,
+            samesite="lax",
+            secure=True,
+            max_age=300
         )
+
+        return response
     
     # if everything found issue a access token
     access_token = auth.create_access_token({"sub": str(user.id)})
@@ -293,7 +349,17 @@ async def verify_otp(
     ):
 
     if not pending_user_token:
-        return RedirectResponse(url="/verify-otp?error=Session expired, signup again", status_code=303)
+        response = RedirectResponse(url="/verify-otp", status_code=303)
+        response.set_cookie(
+            key="error",
+            value="Session expired, Signup again",
+            httponly=True,
+            samesite="lax",
+            secure=True,
+            max_age=300
+        )
+
+        return response
 
     try:
          # 1. Unsign the ID
@@ -304,8 +370,18 @@ async def verify_otp(
         
         if not pending_user or pending_user.otp_code != data.otp:
             # redirect if user not found or if the otp is invalid
-            return RedirectResponse(url="/verify-otp?error=Invalid otp, try again", status_code=303)
-        
+            response = RedirectResponse(url="/verify-otp", status_code=303)
+            response.set_cookie(
+                key="error",
+                value="Invalid otp, try again",
+                httponly=True,
+                samesite="lax",
+                secure=True,
+                max_age=300
+            )
+
+            return response
+            
         # Create new user
         register_user = models.User(
             username=pending_user.username,
@@ -321,13 +397,13 @@ async def verify_otp(
         db.commit()
         db.refresh(register_user)
 
-        # Create the response
-        response = RedirectResponse(url="/registered", status_code=303)
-        
         # Create Token (Use 'sub' id)
         access_token = auth.create_access_token({
             "sub": str(register_user.id)
         })
+
+        # Create the response
+        response = RedirectResponse(url="/nexus/dashboard", status_code=303)
 
         # Set Cookie
         response.set_cookie(
@@ -346,12 +422,71 @@ async def verify_otp(
     except Exception as e:
         db.rollback() #  roll back if anything fails
         print(f"Database Error: {e}")
+
+
+@app.post("/logout")
+async def logout():
+    # 303 See Other is the correct status for redirecting after a POST
+    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    
+    # Securely wipe the token
+    response.delete_cookie(
+        key="Authorization",
+        path="/",
+        httponly=True,
+        samesite="lax"
+    )
+
+    response.headers["Clear-Site-Data"] = '"cache", "cookies", "storage"'
+    return response
     
             
 
 
+@app.post("/recover-access-key")
+async def recover_access_key(
+        request: Request,
+        identifier: Annotated[schemas.RequestRecoverAccessKey, Form()],
+        background_task: BackgroundTasks,
+        db: Session = Depends(get_database)
+    ):
+    # check if the identifier exist 
+    user_exist = db.query(models.User).filter(models.User.email == identifier.email).first()
+    if user_exist:
+        unique_reset_token = utils.generate_reset_token()
+        expire_in = auth.datetime.now(auth.timezone.utc) + auth.timedelta(minutes=15)
 
-# PUT ---
+        identifier_data = models.PasswordResetToken(
+            email=identifier.email,
+            token=unique_reset_token,
+            expires_at=expire_in
+        )
+
+        db.add(identifier_data)
+        db.commit()
+        db.refresh(identifier_data)
+
+        scheme = request.url.scheme # http or https
+        host = request.headers.get("host")
+        reset_link = f"{scheme}://{host}/reset-access-key?token={unique_reset_token}"
+        background_task.add_task(utils.send_reset_link_email, user_exist.email, reset_link)
+    
+    response = RedirectResponse(url="/recover-access-key", status_code=303)
+    response.set_cookie(
+        key="response", 
+        value="If this email is registered, you will receive a reset link shortly.", 
+        httponly=True,
+        samesite="lax",
+        secure=True, 
+        max_age=300 
+    )
+
+    return response
+
+
+
+
+# PUT --- --- --- --- --- ---
 
 # Protected route: Updates the profile of the currently logged-in user.
 @app.put("/users/me", response_model=schemas.UserOut)
