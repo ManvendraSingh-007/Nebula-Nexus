@@ -40,3 +40,6 @@ class UpdateUser(BaseModel):
 
 class VerifyOtp(BaseModel):
     otp: str
+
+class RequestRecoverAccessKey(BaseModel):
+    email: EmailStr
