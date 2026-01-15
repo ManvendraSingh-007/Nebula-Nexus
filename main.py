@@ -106,23 +106,6 @@ async def show_otp_page(request: Request, error: str = Cookie(None, alias="error
     response.delete_cookie(key="error")
     return response
 
-@app.get("/registered", response_class=HTMLResponse)
-async def show_success_registed(request: Request):
-    return templates.TemplateResponse("register-successful.html", {"request": request})
-
-# Fetches a list of all users from the database.
-@app.get("/users", response_model=list[schemas.UserOut])
-def get_users(db: Session = Depends(get_database)):
-    return db.query(models.User).all()
-
-# Protected route: Uses auth.get_current_user to ensure only logged-in users see their info.
-@app.get("/users/me")
-def get_me(current_user: models.User = Depends(auth.get_current_user)):
-    return {
-        "email": current_user.email,
-        "username": current_user.username
-    }
-
 
 @app.get("/nexus/dashboard", response_class=HTMLResponse)
 async def show_dashboard(
@@ -196,9 +179,11 @@ async def show_password_reset_page(
     # 1. If NO token is provided at all
     if not token:
         return RedirectResponse(url="/", status_code=303)
+    
+    hashed_token = utils.hash_token(token)
 
     # 2. Look for the token in the DB
-    resetRequest = db.query(models.PasswordResetToken).filter(models.PasswordResetToken.token == token).first()
+    resetRequest = db.query(models.PasswordResetToken).filter(models.PasswordResetToken.token == hashed_token).first()
 
     # 3. Validation Logic
     if resetRequest:
@@ -444,7 +429,7 @@ async def logout():
 
 
 @app.post("/recover-access-key")
-async def recover_access_key(
+async def send_recovery_instruction(
         request: Request,
         identifier: Annotated[schemas.RequestRecoverAccessKey, Form()],
         background_task: BackgroundTasks,
@@ -458,7 +443,7 @@ async def recover_access_key(
 
         identifier_data = models.PasswordResetToken(
             email=identifier.email,
-            token=unique_reset_token,
+            token=utils.hash_token(unique_reset_token),
             expires_at=expire_in
         )
 
@@ -483,36 +468,38 @@ async def recover_access_key(
 
     return response
 
+@app.post("/reset-access-key")
+async def reset_password(incoming_credential: Annotated[schemas.ResetAccessKey, Form()], db: Session = Depends(get_database)):
+    # 1. Hash the incoming token to match the DB
+    hashed_token = utils.hash_token(incoming_credential.reset_token)
 
+    # 2. Find the reset request
+    reset_request = db.query(models.PasswordResetToken).filter(
+        models.PasswordResetToken.token == hashed_token
+    ).first()
 
+    # 3. If token doesn't exist or is older than 15 mins
+    if not reset_request:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link.")
 
-# PUT --- --- --- --- --- ---
+    # 4. Process the update
+    try:
+        # Find the actual user
+        user = db.query(models.User).filter(models.User.email == reset_request.email).first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found.")
 
-# Protected route: Updates the profile of the currently logged-in user.
-@app.put("/users/me", response_model=schemas.UserOut)
-def update_me(
-        updated: schemas.UpdateUser,
-        db: Session = Depends(get_database),
-        current_user: models.User = Depends(auth.get_current_user),
-    ):
-    # Overwrite current data with new data from the request.
-    current_user.username = updated.username
-    current_user.password = utils.hash_password(updated.password)
+        # Update password
+        user.password = utils.hash_password(incoming_credential.new_password)
+        
+        # 5. Delete the token immediately so it can't be used twice
+        db.delete(reset_request)
+        db.commit()
+        
+        return RedirectResponse(url="/login?message=Password updated successfully", status_code=303)
 
-    db.commit() # Save changes to the existing record.
-    db.refresh(current_user)
-
-    return current_user
-
-
-
-
-
-# DELETE ---
-
-# Protected route: Permanently removes the current user's account from the database.
-@app.delete("/users/me")
-def delete_me(to_delete_user: models.User = Depends(auth.get_current_user), db: Session = Depends(get_database)):
-    db.delete(to_delete_user)
-    db.commit()
-    return {"detail": "User deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        print(f"Error during password reset: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred.")
