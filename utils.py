@@ -1,4 +1,4 @@
-import bcrypt, random, smtplib, ssl, os
+import bcrypt, random, smtplib, ssl, os, secrets
 from email.message import EmailMessage
 
 def generate_otp():
@@ -10,7 +10,7 @@ def send_otp_email(receiver_email: str, code: str):
     msg = EmailMessage()
     
     # Read HTML template
-    with open("templates/email_template.html", "r") as f:
+    with open("templates/emails/verify-otp-email.html", "r") as f:
         html_content = f.read().replace("{code}", code)
     
     # Set HTML content
@@ -43,3 +43,36 @@ def hash_password(password: str) -> str:
 # checks the raw password with the respected hashed one
 def verify_password(password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(password=password.encode(), hashed_password=hashed_password.encode())
+
+def generate_reset_token():
+    return secrets.token_urlsafe(32)
+
+def send_reset_link_email(receiver_email: str, reset_link: str):
+    msg = EmailMessage()
+    
+    # Read HTML template
+    with open("templates/emails/password-reset-email.html", "r") as f:
+        html_content = f.read().replace("{reset_link}", reset_link)
+    
+    # Set HTML content
+    msg.add_alternative(html_content, subtype='html')
+
+    msg['Subject'] = 'Nebula-Nexus | Reset Your Access Key'
+    msg['From'] = "nebulanexus.system@gmail.com"
+    msg['To'] = receiver_email
+
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    sender_email = "nebulanexus.system@gmail.com"
+    app_password = os.getenv("MAIL_APP_PASSWORD")
+
+    context = ssl.create_default_context()
+
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls(context=context)
+            server.login(sender_email, app_password)
+            server.send_message(msg)
+            print(f"--- RESET LINK SENT TO {receiver_email} ---")
+    except Exception as e:
+        print(f"Error: {e}")
