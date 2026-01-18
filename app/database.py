@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
-from config import Config
+from .config import Config
 
 
 # Pull database credentials from the environment

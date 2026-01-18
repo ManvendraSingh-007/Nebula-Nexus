@@ -3,9 +3,9 @@ from jose import jwt, JWTError
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import HTTPException, Depends
 from typing import Optional
-from database import Session, get_database
-import models
-from config import Config
+from .database import Session, get_database
+from .models import User
+from .config import Config
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -42,7 +42,7 @@ def verify_access_token(token: str):
     
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_database)):
     user = verify_access_token(token=token)
-    user = db.query(models.User).filter(models.User.email == user[0]).first()
+    user = db.query(User).filter(User.email == user[0]).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     return user

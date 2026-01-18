@@ -1,5 +1,5 @@
-from database import Base
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, text
+from .database import Base
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, text, ForeignKey
 
 class User(Base):
     __tablename__ = "users"
@@ -9,11 +9,15 @@ class User(Base):
     email = Column(String(100), unique=True, index=True, nullable=False)
     password = Column(String(200), nullable=False)
     
-    
+
 class Message(Base):
     __tablename__ = "messages"
-    
     id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, ForeignKey("users.id"))
+    receiver_id = Column(Integer, ForeignKey("users.id"))
+    content = Column(String(1000))
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
     
 
 class PendingUser(Base):
