@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Connect Across the Cosmos{% endblock %}
+{% block styles %}
+<!-- Shared Styles -->
+<link rel="stylesheet" href="{{ url_for('static', path='/css/global.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/css/constellation.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/css/navigation.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/css/home.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Background -->
+<div id="stars-container"></div>
+<canvas id="constellation-canvas"></canvas>
+
+<!-- Navigation -->
+<nav class="navigation">
+    <a href="/" class="logo">Nebula-Nexus</a>
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+    <div class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/about" class="nav-link">About</a>
+        <a href="/auth/login" class="nav-link">Login</a>
+        <a href="/auth/signup" class="nav-link signup">Sign Up</a>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<header class="hero">
+    <h1 class="gradient-text">Connect Across the Cosmos</h1>
+    <p>A next-generation chat platform for explorers, dreamers, and constellations of friends.</p>
+    <a href="/auth/signup" class="btn-primary">Launch Your Journey</a>
+</header>
+
+<!-- Features Section -->
+<section class="features">
+    <div class="card">
+        <h3>Stellar Speed</h3>
+        <p>Messaging that moves at the speed of light. No lag, no latency, just connection.</p>
+    </div>
+    <div class="card">
+        <h3>Black Hole Privacy</h3>
+        <p>End-to-end encryption so secure even light can't escape it. Your data is yours.</p>
+    </div>
+    <div class="card">
+        <h3>Constellations</h3>
+        <p>Organize your worlds into groups and communities with ease.</p>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    &copy; 2026 Nebula-Nexus. All rights reserved in this galaxy.
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<!-- Scripts -->
+<script src="{{ url_for('static', path='/js/navigation.js') }}"></script>
+<script src="{{ url_for('static', path='/js/constellation.js') }}"></script>
+{% endblock %}

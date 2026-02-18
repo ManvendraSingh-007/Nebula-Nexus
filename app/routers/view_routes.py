@@ -3,10 +3,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Annotated
-
+from sqlalchemy import func
 from app.database import Session, get_database
 from app.auth import verify_access_token
-from app.models import User
+from app.models import User, Message
+from .chat_routes import manager
 
 # Initialize router
 router = APIRouter(tags=["Pages"])
@@ -19,13 +20,13 @@ router.mount("/static", StaticFiles(directory="static"), name="static")
 @router.get("/", response_class=HTMLResponse)
 async def show_home_page(request: Request):
     """Render the landing/home page"""
-    return templates.TemplateResponse("home.html", {"request": request})
+    return templates.TemplateResponse("view/home.html", {"request": request})
 
 
 @router.get("/about", response_class=HTMLResponse)
 async def show_about_page(request: Request):
     """Render the about/chat information page"""
-    return templates.TemplateResponse("chat.html", {"request": request})
+    return templates.TemplateResponse("view/about.html", {"request": request})
 
 
 @router.get("/nexus/dashboard", response_class=HTMLResponse)
@@ -42,14 +43,9 @@ async def show_dashboard(
     if not access_token:
         return RedirectResponse(url="/auth/login", status_code=303)
     
-    try:
-        # Clean and validate the token
-        clean_token = access_token.strip('"') 
-        if clean_token.startswith("Bearer "):
-            clean_token = clean_token.replace("Bearer ", "")
-            
+    try: 
         # Verify token and extract user ID
-        user_id = verify_access_token(clean_token)
+        user_id = verify_access_token(access_token)
         if not user_id:
             raise ValueError("Invalid or expired token")
         
@@ -59,11 +55,10 @@ async def show_dashboard(
             raise ValueError("User not found in database")
         
         # Render dashboard with user data
-        response = templates.TemplateResponse("dashboard.html", {
+        response = templates.TemplateResponse("chat/dashboard.html", {
             "request": request, 
-            "user": user.username,
-            "sender_id": user.id,
-            "email": user.email
+            "user_id": user.id,
+            "user_name": user.username
         })
 
         # Prevent caching to ensure fresh data
@@ -74,7 +69,39 @@ async def show_dashboard(
 
         return response
 
-    except (ValueError, Exception) as e:
-        # Log error and redirect to login on failure
-        print(f"Dashboard access failed: {e}")
-        return RedirectResponse(url="/login", status_code=303)
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc()) # This will show the EXACT line that failed
+        raise e # This will stop the app and show the error in the browser
+    
+
+@router.get("/nexus/chat/dm/{receiver_id}", response_class=HTMLResponse)
+async def show_chat_page(
+    request: Request, 
+    receiver_id: int,
+    access_token: Annotated[str | None, Cookie(alias="Authorization")] = None,
+    db: Session = Depends(get_database)
+):
+    if not access_token:
+        return RedirectResponse(url="/", status_code=303)
+    # 1. Reuse your auth logic to get current user
+    current_user_id = verify_access_token(access_token)
+    print(current_user_id)
+    
+    # 2. Fetch the person you are talking to
+    receiver = db.query(User).filter(User.id == receiver_id).first()
+    current_user = db.query(User).filter(User.id == int(current_user_id)).first()
+
+    if not receiver:
+        return RedirectResponse(url="/nexus/dashboard", status_code=303)
+    
+    is_online = receiver.id in manager.active_connections
+
+    return templates.TemplateResponse("chat/simpleChat.html", {
+        "request": request,
+        "user_id": current_user.id,
+        "user_name": current_user.username,
+        "receiver_id": receiver.id,
+        "receiver_name": receiver.username,
+        "is_online": is_online
+    })

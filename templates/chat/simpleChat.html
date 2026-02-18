@@ -1,0 +1,77 @@
+{% extends "chat/dashboard.html" %}
+
+{% block page_title %}Chatting with {{ receiver_name }}{% endblock %}
+
+{% block user_list %}
+<!-- Load users same as dashboard -->
+{% endblock %}
+
+{% block content_area %}
+<!-- Chat Header -->
+<div class="chat-header">
+    <div class="chat-user-info">
+        <div class="user-avatar">
+            {{ receiver_name[0]|upper }}
+            <span class="status-dot {% if is_online %}online{% endif %}"></span>
+        </div>
+        <div>
+            <h3>{{ receiver_name }}</h3>
+            <p class="last-seen">
+                {% if is_online %}
+                Online
+                {% else %}
+                Offline
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    <button class="header-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="lucide lucide-ellipsis-vertical-icon lucide-ellipsis-vertical">
+            <circle cx="12" cy="12" r="1" />
+            <circle cx="12" cy="5" r="1" />
+            <circle cx="12" cy="19" r="1" />
+        </svg>
+    </button>
+</div>
+
+<!-- Messages Feed -->
+<div class="messages-feed" id="messagesFeed">
+    <!-- Messages loaded here -->
+    <div class="connection-status"></div>
+
+</div>
+
+<!-- Input Bar -->
+<div class="input-bar">
+    <div class="input-wrapper">
+        <button class="attach-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-paperclip-icon lucide-paperclip">
+                <path
+                    d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551" />
+            </svg>
+        </button>
+        <input type="text" class="message-input" id="chatInput" placeholder="Message {{ receiver_name }}" id="msgInput">
+        <button class="send-btn" id="sendButton"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" class="lucide lucide-send-horizontal-icon lucide-send-horizontal">
+                <path
+                    d="M3.714 3.048a.498.498 0 0 0-.683.627l2.843 7.627a2 2 0 0 1 0 1.396l-2.842 7.627a.498.498 0 0 0 .682.627l18-8.5a.5.5 0 0 0 0-.904z" />
+                <path d="M6 12h16" />
+            </svg></button>
+    </div>
+</div>
+{% endblock %}
+
+{% block chat_scripts %}
+<script>
+    let receiverId = Number("{{ receiver_id }}");
+    let receiverName = "{{ receiver_name }}";
+    const userId = Number("{{ user_id }}");
+    const userName = "{{ user_name }}";
+</script>
+<script src="{{ url_for('static', path='/js/chat/chat.js') }}"></script>
+{% endblock %}

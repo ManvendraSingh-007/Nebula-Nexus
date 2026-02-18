@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime, timezone
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import HTTPException, Depends
 from typing import Optional
@@ -28,6 +28,8 @@ def create_access_token(data: dict, expire_delta:  Optional[int] = None):
     return encoded_jwt
 
 def verify_access_token(token: str):
+    token = token.strip('"').replace("Bearer ", "")
+    token = token.strip('"').replace("Bearer ", "")
     try:
         payload = jwt.decode(token=token, key=Config.SECRET_KEY, algorithms=Config.ALGORITHM)
         # {'sub': '2', 'exp': 176783691}
@@ -37,8 +39,12 @@ def verify_access_token(token: str):
         
         return user_id
     
-    except JWTError as j:
-        raise HTTPException(status_code=404, detail=f"{j}")
+    except ExpiredSignatureError:
+        print("Token has expired")
+        return None # Return None
+    except JWTError:
+        print("Invalid token")
+        return None
     
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_database)):
     user = verify_access_token(token=token)

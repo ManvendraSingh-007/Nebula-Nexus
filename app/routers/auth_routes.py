@@ -4,7 +4,7 @@ from app.schemas import UserOut, UserCreate, RequestLogin, VerifyOtp, RequestRec
 from app.models import User, PendingUser, PasswordResetToken
 from typing import Annotated
 from app.utils import hash_password, generate_otp, hash_token, verify_password, generate_reset_token
-from app.auth import create_access_token, timedelta, timezone, datetime
+from app.auth import create_access_token, timedelta, timezone, datetime, verify_access_token
 from itsdangerous import URLSafeSerializer
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -28,7 +28,7 @@ router.mount("/static", StaticFiles(directory="static"), name="static")
 @router.get("/signup", response_class=HTMLResponse)
 async def show_signup_page(request: Request, error: str = Cookie(None, alias="error")):
     """Render the signup page with any stored error messages"""
-    response = templates.TemplateResponse("signup.html", {
+    response = templates.TemplateResponse("auth/signup.html", {
         "request": request,
         "error": error
     })
@@ -40,10 +40,15 @@ async def show_signup_page(request: Request, error: str = Cookie(None, alias="er
 async def show_login_page(
     request: Request, 
     error: str = Cookie(None, alias="error"), 
-    success_msg: str = Cookie(None, alias="message")
+    success_msg: str = Cookie(None, alias="message"),
+    access_token: str = Cookie(None, alias="Authorization")
 ):
     """Render login page with error/success messages from cookies"""
-    response = templates.TemplateResponse("login.html", {
+    if access_token:
+        user_id = verify_access_token(access_token)
+        if user_id:
+            return RedirectResponse("/nexus/dashboard")
+    response = templates.TemplateResponse("auth/login.html", {
         "request": request,
         "error": error,
         "success_msg": success_msg
@@ -71,7 +76,7 @@ async def show_otp_page(
     if not pending_email and error is None:
         return RedirectResponse(url="/auth/signup", status_code=303)
 
-    response = templates.TemplateResponse("verify-otp.html", {
+    response = templates.TemplateResponse("auth/verify-otp.html", {
         "request": request,
         "error": error
     })
@@ -88,7 +93,7 @@ async def show_recover_password_page(
 ):
     """Display password recovery form with status message"""
     context = {"request": request, "message": message}
-    response = templates.TemplateResponse("forgot-password.html", context)
+    response = templates.TemplateResponse("auth/forgot-password.html", context)
     
     if message:
         response.delete_cookie(key="response")  # One-time message
@@ -115,14 +120,14 @@ async def show_password_reset_page(
 
     if resetRequest:
         # Valid token - show reset form
-        return templates.TemplateResponse("password-reset.html", {
+        return templates.TemplateResponse("auth/password-reset.html", {
             "request": request, 
             "error": None,
             "token": token,  # Pass token back for form submission
         })
     else:
         # Invalid/expired token
-        return templates.TemplateResponse("password-reset.html", {
+        return templates.TemplateResponse("auth/password-reset.html", {
             "request": request, 
             "error": "This link has expired or is invalid. Please request a new one.",
             "token": None
@@ -237,7 +242,7 @@ def login(
         httponly=True,
         samesite="lax",
         secure=True,
-        max_age=3600  # 1 hour session
+        max_age=3600*24*2  # 2Days session
     )
     return response
 

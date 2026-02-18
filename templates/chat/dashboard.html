@@ -1,0 +1,20 @@
+{% extends "chat/dashboard-base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block user_list %}
+<!-- Will be populated by JavaScript -->
+{% endblock %}
+
+{% block dashboard_scripts %}
+<script src="{{ url_for('static', path='/js/chat/dashboard.js') }}"></script>
+<script>
+    initDashboard({
+        "userId": Number("{{user_id}}"),
+        "userName": "{{user_name}}"
+    });
+</script>
+
+{% block chat_scripts %}
+{% endblock %}
+{% endblock %}

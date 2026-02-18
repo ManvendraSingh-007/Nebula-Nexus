@@ -1,5 +1,5 @@
 from .database import Base
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, func, text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, func, text, ForeignKey
 
 class User(Base):
     __tablename__ = "users"
@@ -15,8 +15,9 @@ class Message(Base):
     id = Column(Integer, primary_key=True, index=True)
     sender_id = Column(Integer, ForeignKey("users.id"))
     receiver_id = Column(Integer, ForeignKey("users.id"))
-    content = Column(String(1000))
-    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    content = Column(Text, nullable=False)
+    timestamp = Column(DateTime, server_default=text("(UTC_TIMESTAMP())"))
+    is_read = Column(Boolean, default=False)
 
     
 

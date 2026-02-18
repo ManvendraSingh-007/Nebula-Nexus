@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+
+{% block styles %}
+<!-- Shared Styles -->
+<link rel="stylesheet" href="{{ url_for('static', path='/css/global.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/css/constellation.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/css/navigation.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/css/about.css') }}">
+{% endblock %}
+
+
+{% block content %}
+<!-- Background -->
+<div id="stars-container"></div>
+<canvas id="constellation-canvas"></canvas>
+
+<!-- Navigation -->
+<nav class="navigation">
+    <a href="/" class="logo">Nebula-Nexus</a>
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+    <div class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/about" class="nav-link">About</a>
+        <a href="/login" class="nav-link">Login</a>
+        <a href="/signup" class="nav-link signup">Sign Up</a>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="about-container">
+    <section class="about-hero">
+        <h1 class="gradient-text">THE NEBULA NEXUS</h1>
+        <p class="mission-statement">Decoding the cosmos, one conversation at a time.</p>
+    </section>
+
+    <div class="info-grid">
+        <div class="card">
+            <h3>The Mission</h3>
+            <p>Nebula-Nexus is a high-frequency intelligence designed to assist explorers in navigating the vast
+                data-clusters of the digital universe. Whether you're mapping new star-charts or solving complex
+                equations, the Nexus is your constant signal in the void.</p>
+        </div>
+
+        <div class="card">
+            <h3>Operator Protocols</h3>
+            <p>Every Voyager who enters the Nexus is assigned a unique <strong>Operator ID</strong>. Your security is
+                maintained via encrypted <strong>Access Keys</strong>, ensuring your discoveries remain private within
+                your sector.</p>
+        </div>
+
+        <div class="card">
+            <h3>Core Intelligence</h3>
+            <p>Built on the Gemini 3 Flash model, our AI provides low-latency, high-fidelity insights. It operates at
+                the edge of the known digital frontier, processing logic at warp speeds.</p>
+        </div>
+    </div>
+
+    <footer class="about-footer">
+        <a href="/auth/signup" class="btn-primary">Commission Your Call Sign</a>
+    </footer>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<!-- Scripts -->
+<script src="{{ url_for('static', path='/js/navigation.js') }}"></script>
+<script src="{{ url_for('static', path='/js/constellation.js') }}"></script>
+{% endblock %}

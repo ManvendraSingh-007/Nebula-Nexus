@@ -1,0 +1,237 @@
+.form-container {
+    background: var(--glass);
+    padding: 3rem 2.5rem;
+    backdrop-filter: blur(20px);
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.form-container h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    margin-bottom: 10px;
+    background: linear-gradient(to right, #fff, var(--accent-purple), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.recover-h2 {
+    font-size: clamp(1.5rem, 4vw, 2rem) !important;
+}
+
+.recover-p {
+    font-size: 0.85rem !important;
+}
+
+.form-container>p {
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    font-family: monospace;
+    letter-spacing: 1px;
+}
+
+/* Form Elements */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 15px;
+    color: white;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.form input:focus {
+    outline: none;
+    border-color: var(--accent-purple);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 20px rgba(160, 68, 255, 0.2);
+}
+
+.form input::placeholder {
+    color: var(--accent-blue);
+    opacity: 0.4;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.form input[type="submit"] {
+    margin-top: 0.5rem;
+    background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.95rem;
+}
+
+.form input[type="submit"]:hover {
+    filter: brightness(1.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(160, 68, 255, 0.4);
+}
+
+input[type="password"],
+input[type="text"].revealed-coordinates {
+    letter-spacing: 0.3em;
+    font-family: 'Courier New', monospace;
+}
+
+/* Autofill Styles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px #202027 inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Disable spellcheck styling */
+input[type="text"],
+input[type="email"] {
+    color: white !important;
+}
+
+/* Password Toggle */
+.glyph-trigger {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    user-select: none;
+    align-items: center;
+    margin-top: 0.5rem;
+    color: var(--accent-blue);
+    font-size: 0.8rem;
+    font-family: monospace;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.glyph-trigger:hover {
+    filter: brightness(1.4);
+    transform: scale(1.05);
+}
+
+.glyph-trigger p {
+    margin: 0;
+}
+
+/* Footer Links */
+.footer-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+}
+
+.footer-links p {
+    margin: 0;
+}
+
+.footer-links a {
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.footer-links a:hover {
+    color: var(--accent-purple);
+    text-decoration: underline;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .form-container {
+        padding: 2.5rem 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-container {
+        padding: 2rem 1.5rem;
+    }
+
+    .form input {
+        padding: 0.9rem;
+    }
+}
+
+/* For custom error passed from url  */
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    animation: error 0.3s linear 1;
+    color: #dc2626;
+}
+
+@keyframes error {
+    33.33% {
+        transform: translateX(20px);
+    }
+
+    66.66% {
+        transform: translateX(-40px);
+    }
+
+    100% {
+        transform: translateX(20px);
+    }
+}
+
+/* For custom success passed from url  */
+.success-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: #17e410;
+    margin: 10px 0;
+}
+
+.s {
+    font-size: 0.8rem;
+    font-family: 'Space Grotesk';
+}
+
+.back-link {
+    color: var(--accent-blue);
+}
+
+.main-content {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 5%;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1.5rem 5%;
+    }
+}

@@ -19,7 +19,7 @@ class Config:
     MAIL_PWD = os.getenv("MAIL_APP_PASSWORD")
 
     # Default Settings
-    ACCESS_TOKEN_EXPIRE_MINUTES=30
+    ACCESS_TOKEN_EXPIRE_MINUTES=60*24*2
     ALGORITHM="HS256"
 
 

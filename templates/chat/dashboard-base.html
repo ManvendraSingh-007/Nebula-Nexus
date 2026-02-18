@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% block page_title %}{% endblock %}
+{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/dashboard-base.css') }}">
+{% block extra_styles %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="app-container">
+
+    <!-- Column 1: Navigation Bar (60px) -->
+    <nav class="nav-bar">
+        <!-- Logo -->
+        <div class="nav-logo">
+            <a href="/nexus/dashboard">N</a>
+        </div>
+
+        <!-- Nav Icons -->
+        <div class="nav-icons">
+            {% block nav_icons %}
+            <div class="nav-item active" title="Messages">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle-icon lucide-message-circle"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/></svg>
+            </div>
+            <div class="nav-item" title="Contacts">👥</div>
+
+            <div class="nav-item" title="Settings">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-icon lucide-settings"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            {% endblock %}
+        </div>
+
+        <!-- User Profile -->
+        <div class="nav-user">
+            <div class="nav-avatar">
+                {{ user_name[0]|upper }}
+                <span class="status-dot online"></span>
+            </div>
+            <form action="/auth/logout" method="POST">
+                <button class="nav-logout" title="Logout">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out-icon lucide-log-out"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Column 2: Sidebar (320px) -->
+    <aside class="sidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <h2>Messages</h2>
+            <div class="search-wrapper">
+                <input type="text" class="search-input" placeholder="Search friends..." id="searchInput">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-search-icon lucide-user-round-search"><circle cx="10" cy="8" r="5"/><path d="M2 21a8 8 0 0 1 10.434-7.62"/><circle cx="18" cy="18" r="3"/><path d="m22 22-1.9-1.9"/></svg>
+            </div>
+        </div>
+
+        <!-- User List -->
+        <div class="user-list" id="userList">
+            {% block user_list %}
+            <!-- Dynamic content loaded here -->
+            {% endblock %}
+        </div>
+    </aside>
+
+    <!-- Column 3: Content Area (Flexible) -->
+    <main class="content-area">
+        {% block content_area %}
+        <!-- Default: Empty state -->
+        <div class="empty-state">
+            <div class="empty-icon">💬</div>
+            <h2>Welcome to Nexus Chat</h2>
+            <p>Select a conversation to start messaging</p>
+            <div class="quick-stats">
+                <span id="totalUnread">0 unread messages</span>
+            </div>
+        </div>
+        {% endblock %}
+    </main>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% block dashboard_scripts %}{% endblock %}
+{% endblock %}
